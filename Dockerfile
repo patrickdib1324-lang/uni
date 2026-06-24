@@ -1,14 +1,17 @@
 # How the cloud builds and runs your app.
-# Think of it as a recipe: "install Java, copy my files, compile, then run."
+# (Comments must be on their OWN lines in a Dockerfile.)
 
-FROM eclipse-temurin:17-jdk          # a ready-made Linux box that already has Java 17
+# A ready-made Linux box that already has Java 17.
+FROM eclipse-temurin:17-jdk
 
-WORKDIR /app                         # work inside the /app folder on that box
+# Work inside the /app folder.
+WORKDIR /app
 
-COPY . .                             # copy your whole project into /app
+# Copy your whole project in.
+COPY . .
 
-# compile the server (Linux uses ":" between classpath parts, not ";")
-RUN javac -cp "lib/postgresql.jar" -d out server/Server.java
+# Compile the server (UTF-8 so the emojis in the code don't break the build).
+RUN javac -encoding UTF-8 -cp "lib/postgresql.jar" -d out server/Server.java
 
-# start the server when the container runs
+# Start the server when the container runs.
 CMD ["sh", "-c", "java -cp \"out:lib/postgresql.jar\" Server"]
