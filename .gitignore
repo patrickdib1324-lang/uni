@@ -1,0 +1,7 @@
+# NEVER upload these (private!)
+secret.properties
+SECRET.md
+
+# build output / junk
+out/
+*.class

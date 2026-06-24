@@ -1,0 +1,6 @@
+# keep secrets and junk OUT of the cloud image (we use env vars instead)
+secret.properties
+SECRET.md
+out/
+*.class
+.git

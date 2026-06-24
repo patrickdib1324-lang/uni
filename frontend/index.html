@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UniPortal — University Dashboard</title>
+<style>
+  /* ===== BLUE & BLACK THEME ===== */
+  :root{
+    --black:#0a0e1a;          /* deep black background */
+    --panel:#111726;          /* card / panel background */
+    --panel2:#0d1320;         /* sidebar background */
+    --blue:#2563eb;           /* main blue */
+    --blue-light:#3b82f6;
+    --blue-glow:#1d4ed8;
+    --text:#e6ebf5;           /* light text */
+    --muted:#7d8aa5;          /* grey text */
+    --border:#1e2940;
+    --green:#22c55e;
+    --red:#ef4444;
+    --amber:#f59e0b;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif;}
+  body{background:var(--black);color:var(--text);display:flex;min-height:100vh;}
+
+  /* ===== LEFT SIDEBAR / DASHBOARD ===== */
+  .sidebar{
+    width:250px;background:var(--panel2);border-right:1px solid var(--border);
+    padding:24px 16px;display:flex;flex-direction:column;
+    position:fixed;top:0;left:0;height:100vh;z-index:100;overflow-y:auto;
+  }
+  .logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;margin-bottom:32px;padding:0 8px;}
+  .logo .dot{width:30px;height:30px;border-radius:8px;
+    background:linear-gradient(135deg,var(--blue),var(--blue-glow));
+    display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .logo span{color:var(--blue-light);}
+  .nav-item{
+    display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:10px;
+    color:var(--muted);cursor:pointer;margin-bottom:4px;font-size:15px;transition:.2s;
+  }
+  .nav-item:hover{background:var(--panel);color:var(--text);}
+  .nav-item.active{background:linear-gradient(135deg,var(--blue),var(--blue-glow));color:#fff;font-weight:600;}
+  .nav-item .ico{width:20px;text-align:center;}
+  /* red "pending approvals" notification badge */
+  .nav-badge{display:none;margin-left:auto;background:var(--red);color:#fff;font-size:11px;font-weight:700;
+    min-width:20px;height:20px;padding:0 6px;border-radius:10px;align-items:center;justify-content:center;
+    box-shadow:0 0 0 0 rgba(239,68,68,.7);animation:pulse 1.6s infinite;}
+  @keyframes pulse{
+    0%{box-shadow:0 0 0 0 rgba(239,68,68,.7);}
+    70%{box-shadow:0 0 0 9px rgba(239,68,68,0);}
+    100%{box-shadow:0 0 0 0 rgba(239,68,68,0);}
+  }
+  .sidebar-foot{margin-top:auto;padding:14px;background:var(--panel);border-radius:10px;
+    display:flex;align-items:center;gap:10px;font-size:13px;}
+  .avatar-sm{width:34px;height:34px;border-radius:50%;
+    background:linear-gradient(135deg,var(--blue-light),var(--blue-glow));
+    display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff;}
+
+  /* ===== MAIN AREA ===== */
+  .main{margin-left:250px;flex:1;padding:28px 36px;}
+  .topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px;}
+  .topbar h1{font-size:26px;font-weight:700;}
+  .topbar .sub{color:var(--muted);font-size:14px;margin-top:4px;}
+  .search{background:var(--panel);border:1px solid var(--border);border-radius:10px;
+    padding:10px 16px;color:var(--text);width:260px;outline:none;}
+  .search::placeholder{color:var(--muted);}
+
+  /* ===== SUMMARY STAT CARDS ===== */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;margin-bottom:28px;}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;
+    position:relative;overflow:hidden;}
+  .stat::after{content:'';position:absolute;right:-20px;top:-20px;width:80px;height:80px;
+    background:radial-gradient(circle,var(--blue-glow),transparent 70%);opacity:.25;}
+  .stat .label{color:var(--muted);font-size:13px;margin-bottom:10px;}
+  .stat .value{font-size:30px;font-weight:700;}
+  .stat .trend{font-size:12px;margin-top:6px;color:var(--green);}
+  .stat .ico{position:absolute;right:16px;bottom:14px;font-size:26px;opacity:.5;}
+
+  /* ===== PANELS / SECTIONS ===== */
+  .grid2{display:grid;grid-template-columns:2fr 1fr;gap:18px;}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px;margin-bottom:18px;}
+  .card h2{font-size:17px;margin-bottom:18px;display:flex;align-items:center;gap:8px;}
+  .card h2 .bar{width:4px;height:18px;background:var(--blue);border-radius:2px;}
+
+  /* tables */
+  table{width:100%;border-collapse:collapse;}
+  th{text-align:left;color:var(--muted);font-size:12px;text-transform:uppercase;
+     padding:10px 12px;border-bottom:1px solid var(--border);}
+  td{padding:12px;border-bottom:1px solid var(--border);font-size:14px;}
+  tr:last-child td{border-bottom:none;}
+  tr:hover td{background:#0d1424;}
+  .badge{padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600;}
+  .b-green{background:rgba(34,197,94,.15);color:var(--green);}
+  .b-amber{background:rgba(245,158,11,.15);color:var(--amber);}
+  .b-red{background:rgba(239,68,68,.15);color:var(--red);}
+  .b-blue{background:rgba(37,99,235,.15);color:var(--blue-light);}
+
+  /* profile */
+  .profile-head{display:flex;align-items:center;gap:16px;margin-bottom:20px;}
+  .avatar-lg{width:70px;height:70px;border-radius:18px;
+    background:linear-gradient(135deg,var(--blue-light),var(--blue-glow));
+    display:flex;align-items:center;justify-content:center;font-size:28px;font-weight:700;color:#fff;}
+  .profile-info h3{font-size:20px;}
+  .profile-info p{color:var(--muted);font-size:14px;margin-top:2px;}
+  .profile-row{display:flex;justify-content:space-between;padding:11px 0;border-bottom:1px solid var(--border);font-size:14px;}
+  .profile-row span:first-child{color:var(--muted);}
+
+  /* progress bars */
+  .pbar{height:8px;background:var(--border);border-radius:6px;overflow:hidden;margin-top:6px;}
+  .pbar > div{height:100%;background:linear-gradient(90deg,var(--blue),var(--blue-light));border-radius:6px;}
+
+  /* views */
+  .view{display:none;}
+  .view.active{display:block;}
+  .course-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;}
+  .course-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;transition:.2s;}
+  .course-card:hover{border-color:var(--blue);transform:translateY(-3px);}
+  .course-card .ctitle{font-size:17px;font-weight:600;margin-bottom:6px;}
+  .course-card .cteach{color:var(--muted);font-size:13px;margin-bottom:14px;}
+</style>
+</head>
+<body>
+
+  <!-- ===== LOGIN PAGE (shown first, before the app) ===== -->
+  <div id="loginPage" style="position:fixed;inset:0;z-index:1000;background:radial-gradient(circle at 30% 20%,#10203f,var(--black));display:flex;align-items:center;justify-content:center">
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:40px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+      <button id="backToAccount" onclick="backToAccount()" style="display:none;width:100%;background:transparent;color:var(--blue-light);border:1px solid var(--border);border-radius:10px;padding:11px;margin-bottom:18px;font-weight:600;cursor:pointer">← Back to my account</button>
+      <div style="text-align:center;margin-bottom:26px">
+        <div style="font-size:40px">🎓</div>
+        <div style="font-size:24px;font-weight:700">Uni<span style="color:var(--blue-light)">Portal</span></div>
+        <div style="color:var(--muted);font-size:13px;margin-top:4px">Sign in to continue</div>
+      </div>
+
+      <!-- ===== LOGIN FORM ===== -->
+      <div id="loginForm">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Username</div>
+        <input id="loginUser" placeholder=".e.g patrick" onkeydown="if(event.key==='Enter')doLogin()"
+          style="width:100%;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:16px;outline:none">
+
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Password</div>
+        <input id="loginPass" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"
+          style="width:100%;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:20px;outline:none">
+
+        <button onclick="doLogin()" style="width:100%;background:linear-gradient(135deg,var(--blue),var(--blue-glow));color:#fff;border:none;border-radius:10px;padding:13px;font-weight:600;font-size:15px;cursor:pointer">Sign In →</button>
+        <div style="text-align:center;font-size:13px;margin-top:16px;color:var(--muted)">
+          New here? <a onclick="toggleAuth(true)" style="color:var(--blue-light);cursor:pointer;font-weight:600">Request an account</a>
+        </div>
+      </div>
+
+      <!-- ===== SIGN-UP / REQUEST FORM (students AND teachers — needs admin approval) ===== -->
+      <div id="signupForm" style="display:none">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">I am a</div>
+        <select id="suRole" style="width:100%;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;outline:none">
+          <option value="student">🧑‍🎓 Student</option>
+          <option value="teacher">👨‍🏫 Teacher</option>
+        </select>
+
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Full name</div>
+        <input id="suName" placeholder="e.g. Mona Saleh"
+          style="width:100%;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;outline:none">
+
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Email</div>
+        <input id="suEmail" placeholder="e.g. mona@uni.edu"
+          style="width:100%;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;outline:none">
+
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Username</div>
+        <input id="suUser" placeholder="e.g. mona"
+          style="width:100%;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;outline:none">
+
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Password</div>
+        <input id="suPass" type="password" placeholder="••••••"
+          style="width:100%;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:20px;outline:none">
+
+        <button onclick="doRegister()" style="width:100%;background:linear-gradient(135deg,var(--green),#16a34a);color:#fff;border:none;border-radius:10px;padding:13px;font-weight:600;font-size:15px;cursor:pointer">📩 Request Account</button>
+        <div style="text-align:center;font-size:12px;margin-top:12px;color:var(--muted)">
+          An admin reviews every request before you can log in.
+        </div>
+        <div style="text-align:center;font-size:13px;margin-top:10px;color:var(--muted)">
+          Already have an account? <a onclick="toggleAuth(false)" style="color:var(--blue-light);cursor:pointer;font-weight:600">Sign in</a>
+        </div>
+      </div>
+
+      <div id="loginMsg" style="text-align:center;font-size:13px;margin-top:14px;min-height:18px"></div>
+    </div>
+  </div>
+
+  <!-- the whole app is hidden until login succeeds -->
+  <div id="app" style="display:none;width:100%">
+
+  <!-- ===== LEFT DASHBOARD SIDEBAR ===== -->
+  <div class="sidebar">
+    <div class="logo"><div class="dot">🎓</div>Uni<span>Portal</span></div>
+
+    <div class="nav-item active" data-roles="student,teacher,admin" onclick="show('dashboard',this)"><span class="ico">📊</span> Dashboard</div>
+    <div class="nav-item" data-roles="teacher,admin" onclick="show('students',this)"><span class="ico">👥</span> Students</div>
+    <div class="nav-item" data-roles="admin" onclick="show('requests',this)"><span class="ico">🆕</span> Requests <span id="requestsBadge" class="nav-badge"></span></div>
+    <div class="nav-item" data-roles="student,teacher,admin" onclick="show('courses',this)"><span class="ico">📚</span> Courses</div>
+    <div class="nav-item" data-roles="student" onclick="show('mycourses',this)"><span class="ico">🎒</span> My Courses</div>
+    <div class="nav-item" data-roles="student,admin" onclick="show('enroll',this)"><span class="ico">📝</span> Enroll</div>
+    <div class="nav-item" data-roles="student,teacher,admin" onclick="show('grades',this)"><span class="ico">📈</span> Grades <span id="gradesBadge" class="nav-badge"></span></div>
+    <div class="nav-item" data-roles="student,teacher,admin" onclick="show('profile',this)"><span class="ico">👤</span> Profile</div>
+
+    <div class="sidebar-foot">
+      <div class="avatar-sm" id="meAvatar">?</div>
+      <div style="flex:1"><div style="font-weight:600" id="meName">—</div><div style="color:var(--muted)" id="meRole">—</div></div>
+      <div onclick="logout()" title="Log out" style="cursor:pointer;font-size:18px">🚪</div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN AREA ===== -->
+  <div class="main">
+
+    <div class="topbar">
+      <div style="display:flex;align-items:center;gap:14px">
+        <button onclick="goToLogin()" title="Go to the login page (stay signed in)" style="background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer">← Login</button>
+        <div>
+          <h1 id="page-title">Dashboard</h1>
+          <div class="sub" id="page-sub">Welcome back, here's your summary 👋</div>
+        </div>
+      </div>
+      <input class="search" id="searchBox" placeholder="🔍 Search courses..." oninput="searchCourses()" style="display:none">
+    </div>
+
+    <!-- ===== DASHBOARD VIEW (summary) ===== -->
+    <div class="view active" id="dashboard">
+      <div class="stats">
+        <div class="stat"><div class="label">Total Students</div><div class="value">1,532</div><div class="trend">▲ 8% this term</div><div class="ico">👥</div></div>
+        <div class="stat"><div class="label">Active Courses</div><div class="value">42</div><div class="trend">▲ 3 new</div><div class="ico">📚</div></div>
+        <div class="stat"><div class="label">Avg Grade</div><div class="value">82%</div><div class="trend">▲ 2.4%</div><div class="ico">📈</div></div>
+        <div class="stat"><div class="label">Pass Rate</div><div class="value">91%</div><div class="trend">▲ 1.1%</div><div class="ico">✅</div></div>
+      </div>
+
+      <div class="grid2">
+        <div class="card">
+          <h2><span class="bar"></span>Recent Grades</h2>
+          <table>
+            <thead><tr><th>Student</th><th>Course</th><th>Score</th><th>Status</th></tr></thead>
+            <tbody>
+              <tr><td>Sara Ahmed</td><td>Mathematics</td><td>92</td><td><span class="badge b-green">Excellent</span></td></tr>
+              <tr><td>Ali Hassan</td><td>Physics</td><td>78</td><td><span class="badge b-blue">Good</span></td></tr>
+              <tr><td>Omar Khaled</td><td>Chemistry</td><td>64</td><td><span class="badge b-amber">Pass</span></td></tr>
+              <tr><td>Lina Yousef</td><td>Biology</td><td>88</td><td><span class="badge b-green">Excellent</span></td></tr>
+              <tr><td>Noor Adel</td><td>English</td><td>51</td><td><span class="badge b-red">At Risk</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="card">
+          <h2><span class="bar"></span>Top Courses</h2>
+          <div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;font-size:14px"><span>Mathematics</span><span>92%</span></div><div class="pbar"><div style="width:92%"></div></div></div>
+          <div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;font-size:14px"><span>Biology</span><span>85%</span></div><div class="pbar"><div style="width:85%"></div></div></div>
+          <div style="margin-bottom:16px"><div style="display:flex;justify-content:space-between;font-size:14px"><span>Physics</span><span>79%</span></div><div class="pbar"><div style="width:79%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between;font-size:14px"><span>Chemistry</span><span>71%</span></div><div class="pbar"><div style="width:71%"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== STUDENTS VIEW ===== -->
+    <div class="view" id="students">
+      <div class="card">
+        <h2><span class="bar"></span><span id="studentsTitle">Students</span> <span id="studentsScope" style="font-size:12px;color:var(--muted);font-weight:400"></span></h2>
+        <table>
+          <thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Courses</th><th>Avg</th></tr></thead>
+          <tbody id="studentsBody">
+            <tr><td colspan="5" style="color:var(--muted)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== ACCOUNT REQUESTS VIEW (admin approves new sign-ups) ===== -->
+    <div class="view" id="requests">
+      <div class="card">
+        <h2><span class="bar"></span>🆕 Account Requests <span style="font-size:12px;color:var(--muted);font-weight:400">(new students & teachers awaiting approval)</span></h2>
+        <div id="requestsAlert" style="display:none;background:rgba(239,68,68,.12);border:1px solid var(--red);color:var(--red);border-radius:10px;padding:11px 14px;margin-bottom:14px;font-weight:600">
+          🔔 <span id="requestsAlertText"></span>
+        </div>
+        <table>
+          <thead><tr><th>Type</th><th>Name</th><th>Username</th><th>Email</th><th>Requested</th><th>Decision</th></tr></thead>
+          <tbody id="requestsBody">
+            <tr><td colspan="6" style="color:var(--muted)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== COURSES VIEW (Computer Science major) ===== -->
+    <div class="view" id="courses">
+
+      <div id="noResults" style="display:none;color:var(--muted);padding:20px;text-align:center">
+        🔍 No courses match your search.
+      </div>
+
+      <h2 style="font-size:16px;color:var(--muted);margin:0 0 14px 0">🟢 Year 1 — Foundations</h2>
+      <div class="course-grid" style="margin-bottom:26px">
+        <div class="course-card"><div class="ctitle">💻 CS101 · Intro to Programming</div><div class="cteach">Dr. Karim Jad</div><span class="badge b-blue">3 credits</span> <span class="badge b-green">410 students</span></div>
+        <div class="course-card"><div class="ctitle">📐 CS102 · Discrete Mathematics</div><div class="cteach">Dr. Sami Farah</div><span class="badge b-blue">3 credits</span> <span class="badge b-green">380 students</span></div>
+        <div class="course-card"><div class="ctitle">🧮 CS103 · Calculus I</div><div class="cteach">Dr. Maya Tarek</div><span class="badge b-blue">4 credits</span> <span class="badge b-green">395 students</span></div>
+      </div>
+
+      <h2 style="font-size:16px;color:var(--muted);margin:0 0 14px 0">🔵 Year 2 — Core</h2>
+      <div class="course-grid" style="margin-bottom:26px">
+        <div class="course-card"><div class="ctitle">🗂️ CS201 · Data Structures</div><div class="cteach">Dr. Hadi Nasser</div><span class="badge b-blue">4 credits</span> <span class="badge b-green">320 students</span></div>
+        <div class="course-card"><div class="ctitle">⚙️ CS202 · Algorithms</div><div class="cteach">Dr. Rana Sayed</div><span class="badge b-blue">4 credits</span> <span class="badge b-green">300 students</span></div>
+        <div class="course-card"><div class="ctitle">🧱 CS203 · Object-Oriented Programming (Java)</div><div class="cteach">Dr. Karim Jad</div><span class="badge b-blue">3 credits</span> <span class="badge b-green">340 students</span></div>
+        <div class="course-card"><div class="ctitle">🖥️ CS204 · Computer Architecture</div><div class="cteach">Dr. Adam Reem</div><span class="badge b-blue">3 credits</span> <span class="badge b-green">260 students</span></div>
+      </div>
+
+      <h2 style="font-size:16px;color:var(--muted);margin:0 0 14px 0">🟣 Year 3 — Systems & Data</h2>
+      <div class="course-grid" style="margin-bottom:26px">
+        <div class="course-card"><div class="ctitle">🗄️ CS301 · Databases (SQL)</div><div class="cteach">Dr. Rana Sayed</div><span class="badge b-blue">3 credits</span> <span class="badge b-green">280 students</span></div>
+        <div class="course-card"><div class="ctitle">🧠 CS302 · Operating Systems</div><div class="cteach">Dr. Hadi Nasser</div><span class="badge b-blue">4 credits</span> <span class="badge b-amber">230 students</span></div>
+        <div class="course-card"><div class="ctitle">🌐 CS303 · Computer Networks</div><div class="cteach">Dr. Sami Farah</div><span class="badge b-blue">3 credits</span> <span class="badge b-amber">210 students</span></div>
+        <div class="course-card"><div class="ctitle">🕸️ CS304 · Web Development</div><div class="cteach">Dr. Karim Jad</div><span class="badge b-blue">3 credits</span> <span class="badge b-green">350 students</span></div>
+      </div>
+
+      <h2 style="font-size:16px;color:var(--muted);margin:0 0 14px 0">🟠 Year 4 — Advanced & Electives</h2>
+      <div class="course-grid">
+        <div class="course-card"><div class="ctitle">🤖 CS401 · Artificial Intelligence</div><div class="cteach">Dr. Maya Tarek</div><span class="badge b-blue">4 credits</span> <span class="badge b-amber">190 students</span></div>
+        <div class="course-card"><div class="ctitle">📊 CS402 · Machine Learning</div><div class="cteach">Dr. Rana Sayed</div><span class="badge b-blue">4 credits</span> <span class="badge b-amber">175 students</span></div>
+        <div class="course-card"><div class="ctitle">🔐 CS403 · Cybersecurity</div><div class="cteach">Dr. Adam Reem</div><span class="badge b-blue">3 credits</span> <span class="badge b-amber">160 students</span></div>
+        <div class="course-card"><div class="ctitle">☁️ CS404 · Cloud & DevOps</div><div class="cteach">Dr. Hadi Nasser</div><span class="badge b-blue">3 credits</span> <span class="badge b-amber">140 students</span></div>
+        <div class="course-card"><div class="ctitle">📱 CS405 · Mobile App Development</div><div class="cteach">Dr. Karim Jad</div><span class="badge b-blue">3 credits</span> <span class="badge b-green">220 students</span></div>
+        <div class="course-card"><div class="ctitle">🎓 CS406 · Graduation Project</div><div class="cteach">Dr. Sami Farah</div><span class="badge b-blue">6 credits</span> <span class="badge b-green">200 students</span></div>
+      </div>
+    </div>
+
+    <!-- ===== MY COURSES VIEW (each student's own enrolled courses) ===== -->
+    <div class="view" id="mycourses">
+      <div class="card">
+        <h2><span class="bar"></span>🎒 My Enrolled Courses <span id="mcCredits" style="font-size:12px;color:var(--muted);font-weight:400"></span></h2>
+        <table>
+          <thead><tr><th>Code</th><th>Course</th><th>Credits</th><th>Score</th><th>Status</th></tr></thead>
+          <tbody id="myCoursesBody">
+            <tr><td colspan="5" style="color:var(--muted)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== ENROLL VIEW (Student selects courses, min 15 credits) ===== -->
+    <div class="view" id="enroll">
+      <div id="welcomeBanner" style="display:none;background:linear-gradient(135deg,var(--blue),var(--blue-glow));border-radius:14px;padding:18px 22px;margin-bottom:18px">
+        <div style="font-size:18px;font-weight:700">👋 Welcome! Let's get you enrolled.</div>
+        <div style="font-size:13px;opacity:.9;margin-top:4px">Pick at least <b>15 credits</b> of courses to start your semester.</div>
+      </div>
+      <div class="card">
+        <h2><span class="bar"></span>📝 Enroll in Courses <span style="font-size:12px;color:var(--muted);font-weight:400">(minimum 15 credits)</span></h2>
+
+        <div style="margin-bottom:16px">
+          <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Student</div>
+          <select id="enStudent" onchange="loadEnrollList()" style="background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;min-width:200px"></select>
+        </div>
+
+        <div id="enrollList" style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px"></div>
+
+        <div style="display:flex;align-items:center;gap:18px;flex-wrap:wrap">
+          <div style="font-size:18px;font-weight:700">
+            Selected: <span id="enTotal" style="color:var(--blue-light)">0</span> / 15 credits
+          </div>
+          <div id="enBar" class="pbar" style="flex:1;min-width:200px;height:12px"><div style="width:0%"></div></div>
+          <button id="enBtn" onclick="doEnroll()" disabled
+            style="background:var(--border);color:var(--muted);border:none;border-radius:8px;padding:12px 26px;font-weight:600;cursor:not-allowed">
+            ✅ Enroll
+          </button>
+          <span id="enMsg" style="font-size:13px"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== GRADES VIEW (Teacher) ===== -->
+    <div class="view" id="grades">
+
+      <!-- Teacher / Admin: ENTER a grade → saves to the database (hidden from students) -->
+      <div class="card" id="enterGradeCard" data-roles="teacher,admin">
+        <h2><span class="bar"></span>✏️ Enter a Grade <span id="gradeScope" style="font-size:12px;color:var(--muted);font-weight:400"></span></h2>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:end">
+          <div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Course <span id="gCourseHint" style="color:var(--blue-light)"></span></div>
+            <select id="gCourse" onchange="loadCourseStudentsForGrade()" style="background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;min-width:240px"></select>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Student <span style="color:var(--blue-light)">(enrolled)</span></div>
+            <select id="gStudent" style="background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;min-width:200px"></select>
+          </div>
+          <div>
+            <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Score (0–100)</div>
+            <input id="gScore" type="number" min="0" max="100" style="background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px;width:120px">
+          </div>
+          <button id="gSaveBtn" onclick="saveGrade()" style="background:linear-gradient(135deg,var(--blue),var(--blue-glow));color:#fff;border:none;border-radius:8px;padding:11px 22px;font-weight:600;cursor:pointer">💾 Save</button>
+          <span id="gMsg" style="font-size:13px"></span>
+        </div>
+      </div>
+
+      <!-- ADMIN INBOX: grades teachers sent for approval -->
+      <div class="card" data-roles="admin">
+        <h2><span class="bar"></span>📥 Pending Approvals <span style="font-size:12px;color:var(--muted);font-weight:400">(grades sent by teachers)</span></h2>
+        <div id="approvalsAlert" style="display:none;background:rgba(239,68,68,.12);border:1px solid var(--red);color:var(--red);border-radius:10px;padding:11px 14px;margin-bottom:14px;font-weight:600">
+          🔔 <span id="approvalsAlertText"></span>
+        </div>
+        <table>
+          <thead><tr><th>Teacher</th><th>Student</th><th>Course</th><th>Score</th><th>Sent</th><th>Decision</th></tr></thead>
+          <tbody id="approvalsBody">
+            <tr><td colspan="6" style="color:var(--muted)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- TEACHER: status of the grades I sent the admin -->
+      <div class="card" data-roles="teacher">
+        <h2><span class="bar"></span>📤 My Submitted Grades <span style="font-size:12px;color:var(--muted);font-weight:400">(waiting for admin approval)</span></h2>
+        <table>
+          <thead><tr><th>Student</th><th>Course</th><th>Score</th><th>Sent</th><th>Status</th></tr></thead>
+          <tbody id="mySubmissionsBody">
+            <tr><td colspan="5" style="color:var(--muted)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Live list of grades, read from the database (scoped to the user's role) -->
+      <div class="card">
+        <h2><span class="bar"></span><span id="gradesTitle">All Grades</span> <span id="gradesScope" style="font-size:12px;color:var(--muted);font-weight:400">(live from database)</span></h2>
+        <table>
+          <thead><tr><th>Student</th><th>Course</th><th>Score</th><th>Grade</th><th>Status</th></tr></thead>
+          <tbody id="gradesBody">
+            <tr><td colspan="5" style="color:var(--muted)">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ===== PROFILE VIEW ===== -->
+    <div class="view" id="profile">
+      <div class="grid2">
+        <div class="card">
+          <h2><span class="bar"></span>Profile</h2>
+          <div class="profile-head">
+            <div class="avatar-lg">SA</div>
+            <div class="profile-info"><h3>Sara Ahmed</h3><p>Student · Computer Science</p></div>
+          </div>
+          <div class="profile-row"><span>Student ID</span><span>#1</span></div>
+          <div class="profile-row"><span>Email</span><span>sara@uni.edu</span></div>
+          <div class="profile-row"><span>Country</span><span>UAE 🇦🇪</span></div>
+          <div class="profile-row"><span>Enrolled Courses</span><span>5</span></div>
+          <div class="profile-row"><span>Overall Average</span><span><span class="badge b-green">88%</span></span></div>
+          <div class="profile-row"><span>Status</span><span><span class="badge b-blue">Active</span></span></div>
+        </div>
+
+        <div class="card">
+          <h2><span class="bar"></span>Summary</h2>
+          <div style="margin-bottom:18px"><div style="display:flex;justify-content:space-between"><span>Attendance</span><span>96%</span></div><div class="pbar"><div style="width:96%"></div></div></div>
+          <div style="margin-bottom:18px"><div style="display:flex;justify-content:space-between"><span>Assignments Done</span><span>84%</span></div><div class="pbar"><div style="width:84%"></div></div></div>
+          <div style="margin-bottom:18px"><div style="display:flex;justify-content:space-between"><span>Average Grade</span><span>88%</span></div><div class="pbar"><div style="width:88%"></div></div></div>
+          <div><div style="display:flex;justify-content:space-between"><span>Credits Earned</span><span>72%</span></div><div class="pbar"><div style="width:72%"></div></div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  </div><!-- /#app -->
+
+<script>
+  // ===== LOGIN + ROLES =====
+  let currentUser = null;   // { role, name, studentId }
+
+  async function doLogin(){
+    const username = document.getElementById('loginUser').value;
+    const password = document.getElementById('loginPass').value;
+    const msg = document.getElementById('loginMsg');
+    msg.style.color = 'var(--muted)'; msg.textContent = 'Checking…';
+
+    const res = await fetch('/api/login', {
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:`username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}`
+    });
+    const out = await res.json();
+    if(out.ok){
+      currentUser = out;
+      document.getElementById('loginPage').style.display = 'none';   // hide login
+      document.getElementById('app').style.display = 'block';        // show app
+      applyRole(out);
+    } else {
+      msg.style.color = 'var(--red)'; msg.textContent = '❌ ' + (out.error || 'Login failed');
+    }
+  }
+
+  function applyRole(user){
+    // fill the sidebar footer with who's logged in
+    const initials = user.name.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    document.getElementById('meAvatar').textContent = initials;
+    document.getElementById('meName').textContent = user.name;
+    const roleLabel = {student:'🧑‍🎓 Student', teacher:'👨‍🏫 Teacher', admin:'👑 Admin'}[user.role];
+    document.getElementById('meRole').textContent = roleLabel;
+
+    // show/hide every element that has data-roles based on the user's role
+    document.querySelectorAll('[data-roles]').forEach(el => {
+      const allowed = el.getAttribute('data-roles').split(',');
+      el.style.display = allowed.includes(user.role) ? '' : 'none';
+    });
+
+    // students see ONLY their own grades; teacher/admin see everyone
+    loadGradesTable();
+    // start watching for notifications (admin: pending approvals badge)
+    startNotifications();
+    // open the dashboard
+    document.querySelector('.nav-item[data-roles]').click();
+  }
+
+  // ← Login button: go to the login page but STAY signed in (so you can come back)
+  function goToLogin(){
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('loginPage').style.display = 'flex';
+    document.getElementById('loginMsg').textContent = '';
+    updateBackToAccount();
+  }
+  // ← Back to my account: return to the app without logging in again
+  function backToAccount(){
+    if(!currentUser) return;
+    document.getElementById('loginPage').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+  }
+  // show the "Back to my account" button only while a session is active
+  function updateBackToAccount(){
+    const b = document.getElementById('backToAccount');
+    if(b) b.style.display = currentUser ? 'block' : 'none';
+  }
+
+  function logout(){
+    stopNotifications();
+    currentUser = null;
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('loginPage').style.display = 'flex';
+    updateBackToAccount();
+    document.getElementById('loginUser').value = '';
+    document.getElementById('loginPass').value = '';
+    document.getElementById('loginMsg').textContent = '';
+    document.getElementById('gradesBadge').style.display = 'none';
+    document.getElementById('requestsBadge').style.display = 'none';
+    toggleAuth(false);   // back to the login form
+  }
+
+  // ===== ROLE-SPECIFIC STUDENT LIST (teacher = own students, admin = all) =====
+  async function loadStudents(){
+    if(!currentUser) return;
+    let url = '/api/students-overview';
+    if(currentUser.role === 'teacher'){
+      url += '?teacherId=' + currentUser.teacherId;
+      document.getElementById('studentsTitle').textContent = 'My Students';
+      document.getElementById('studentsScope').textContent = '(enrolled in the courses you teach)';
+    } else {
+      document.getElementById('studentsTitle').textContent = 'All Students';
+      document.getElementById('studentsScope').textContent = '(every student · live)';
+    }
+    const rows = await (await fetch(url)).json();
+    document.getElementById('studentsBody').innerHTML = rows.map(r => {
+      const avg = r.avg == null ? '—' : r.avg + '%';
+      const cls = r.avg == null ? 'b-blue' : r.avg >= 80 ? 'b-green' : r.avg >= 60 ? 'b-amber' : 'b-red';
+      return `<tr><td>#${r.id}</td><td>${r.name}</td><td>${r.email}</td>
+              <td>${r.courses}</td><td><span class="badge ${cls}">${avg}</span></td></tr>`;
+    }).join('') || '<tr><td colspan="5" style="color:var(--muted)">No students yet.</td></tr>';
+  }
+
+  // ===== ADMIN: account requests (new students & teachers) =====
+  async function loadRequests(){
+    const rows = await (await fetch('/api/account-requests?status=pending')).json();
+    renderRequests(rows);
+  }
+  function renderRequests(rows){
+    const alert = document.getElementById('requestsAlert');
+    if(rows.length){
+      document.getElementById('requestsAlertText').textContent =
+        rows.length + (rows.length === 1 ? ' person is' : ' people are') + ' waiting to join the website';
+      alert.style.display = 'block';
+    } else {
+      alert.style.display = 'none';
+    }
+    setBadge('requestsBadge', rows.length);
+    document.getElementById('requestsBody').innerHTML = rows.map(r => {
+      const typeBadge = r.role === 'teacher'
+        ? '<span class="badge b-blue">👨‍🏫 Teacher</span>'
+        : '<span class="badge b-green">🧑‍🎓 Student</span>';
+      return `<tr>
+        <td>${typeBadge}</td>
+        <td>${r.name}</td>
+        <td>${r.username}</td>
+        <td>${r.email||''}</td>
+        <td style="color:var(--muted);font-size:12px">${(r.requestedAt||'').slice(0,16)}</td>
+        <td>
+          <button onclick="decideAccount(${r.id},'approve')" style="background:linear-gradient(135deg,var(--green),#16a34a);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-weight:600;cursor:pointer;margin-right:6px">✓ Accept</button>
+          <button onclick="decideAccount(${r.id},'reject')"  style="background:rgba(239,68,68,.15);color:var(--red);border:1px solid var(--red);border-radius:7px;padding:6px 12px;font-weight:600;cursor:pointer">✕ Reject</button>
+        </td>
+      </tr>`;
+    }).join('') ||
+      '<tr><td colspan="6" style="color:var(--muted)">📭 No pending requests — nobody is waiting to join.</td></tr>';
+  }
+
+  // ADMIN accepts/rejects a sign-up → on accept the real login is created
+  async function decideAccount(requestId, decision){
+    const res = await fetch('/api/account-decision', {
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:`requestId=${requestId}&decision=${decision}&role=${encodeURIComponent(currentUser.role)}`
+    });
+    const out = await res.json();
+    if(out.ok){
+      loadRequests();   // refresh the queue + badge
+    } else {
+      alert('❌ ' + (out.error || 'failed'));
+    }
+  }
+
+  // ===== NOTIFICATIONS — red badge when teachers send grades / people request accounts =====
+  let notifTimer = null;
+  function startNotifications(){
+    stopNotifications();
+    refreshNotifications();
+    notifTimer = setInterval(refreshNotifications, 7000);   // live poll
+  }
+  function stopNotifications(){ if(notifTimer){ clearInterval(notifTimer); notifTimer = null; } }
+
+  async function refreshNotifications(){
+    if(!currentUser) return;
+    const onGrades = document.getElementById('grades').classList.contains('active');
+    if(currentUser.role === 'admin'){
+      const rows = await (await fetch('/api/submissions?status=pending')).json();
+      setBadge('gradesBadge', rows.length);                 // red badge on the Grades menu
+      if(onGrades) renderApprovals(rows);                   // refresh the inbox live
+      const reqs = await (await fetch('/api/account-requests?status=pending')).json();
+      setBadge('requestsBadge', reqs.length);               // red badge on the Requests menu
+      if(document.getElementById('requests').classList.contains('active')) renderRequests(reqs);
+    } else if(currentUser.role === 'teacher'){
+      if(onGrades) loadMySubmissions();                     // keep statuses fresh
+    }
+  }
+  function setBadge(id, n){
+    const b = document.getElementById(id);
+    if(!b) return;
+    if(n > 0){ b.textContent = n; b.style.display = 'inline-flex'; }
+    else     { b.style.display = 'none'; }
+  }
+
+  // switch between Login and Sign-up forms
+  function toggleAuth(showSignup){
+    document.getElementById('loginForm').style.display  = showSignup ? 'none' : 'block';
+    document.getElementById('signupForm').style.display = showSignup ? 'block' : 'none';
+    document.getElementById('loginMsg').textContent = '';
+  }
+
+  // NEW student OR teacher REQUESTS an account → it is sent to the admin (no auto-login)
+  async function doRegister(){
+    const msg = document.getElementById('loginMsg');
+    const role = document.getElementById('suRole').value;
+    const body = `name=${encodeURIComponent(suName.value)}`
+               + `&email=${encodeURIComponent(suEmail.value)}`
+               + `&username=${encodeURIComponent(suUser.value)}`
+               + `&password=${encodeURIComponent(suPass.value)}`
+               + `&role=${encodeURIComponent(role)}`;
+    msg.style.color='var(--muted)'; msg.textContent='Sending your request…';
+
+    const res = await fetch('/api/register', {
+      method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body
+    });
+    const out = await res.json();
+    if(out.ok){
+      // do NOT log in — wait for the admin to accept
+      toggleAuth(false);                                  // back to the login form
+      ['suName','suEmail','suUser','suPass'].forEach(id => document.getElementById(id).value='');
+      msg.style.color='var(--green)';
+      msg.textContent='📩 Request sent! An admin will review it. You can log in once accepted.';
+    } else {
+      msg.style.color='var(--red)'; msg.textContent='❌ '+(out.error||'Request failed');
+    }
+  }
+  let isNewStudent = false;
+
+  // switch between views when a sidebar item is clicked
+  const titles = {
+    dashboard:["Dashboard","Welcome back, here's your summary 👋"],
+    students:["Students","All enrolled students"],
+    requests:["Account Requests","Accept or reject new sign-ups"],
+    courses:["Courses","Browse all available courses"],
+    mycourses:["My Courses","The courses you're enrolled in"],
+    enroll:["Enroll","Pick courses — at least 15 credits"],
+    grades:["Grades","Enter grades for enrolled students"],
+    profile:["Profile","Your account & summary"]
+  };
+  function show(id, el){
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('page-title').textContent = titles[id][0];
+    document.getElementById('page-sub').textContent = titles[id][1];
+    // the Grades page means something different for each role
+    if(id === 'grades' && currentUser){
+      document.getElementById('page-sub').textContent =
+        currentUser.role === 'student' ? 'Your grades, read-only' :
+        currentUser.role === 'teacher' ? 'Enter & review grades for the courses you teach' :
+                                         'Enter & review grades for every student';
+    }
+    // search box ONLY appears on the Courses page
+    const box = document.getElementById('searchBox');
+    if(id === 'courses'){
+      box.style.display = '';               // show it
+    } else {
+      box.style.display = 'none';           // hide on all other pages
+      box.value = '';                       // clear it
+      searchCourses();                      // reset cards back to visible
+    }
+    if(id === 'grades') loadGradesView();   // load DB data when opening Grades
+    if(id === 'enroll') loadEnrollView();   // load enrollment screen
+    if(id === 'mycourses') loadMyCourses(); // load the student's own courses
+    if(id === 'students') loadStudents();   // load role-specific student list
+    if(id === 'requests') loadRequests();   // load pending account requests (admin)
+  }
+
+  // ===== STUDENT: MY COURSES (their own enrolled courses) =====
+  async function loadMyCourses(){
+    if(!currentUser || currentUser.studentId == null) return;
+    const courses = await (await fetch('/api/student-courses?studentId='+currentUser.studentId)).json();
+    let totalCredits = 0;
+    const body = courses.map(c => {
+      totalCredits += c.credits;
+      const s = c.score;
+      const letter = s==null?'-': s>=90?'A': s>=80?'B': s>=70?'C': s>=60?'D':'F';
+      let badge = '<span class="badge b-amber">In progress</span>';
+      if(s!=null) badge = s>=60 ? '<span class="badge b-green">Pass</span>'
+                                : '<span class="badge b-red">Fail</span>';
+      return `<tr><td>${c.code}</td><td>${c.title}</td><td>${c.credits}</td>
+              <td>${s==null?'—':s}</td><td>${letter} ${badge}</td></tr>`;
+    }).join('');
+    document.getElementById('myCoursesBody').innerHTML =
+      body || '<tr><td colspan="5" style="color:var(--muted)">You haven\'t enrolled in any course yet. Go to 📝 Enroll.</td></tr>';
+    document.getElementById('mcCredits').textContent =
+      courses.length ? `(${courses.length} courses · ${totalCredits} credits)` : '';
+  }
+
+  // ===== GRADES (role-aware: teacher grades only their courses, admin grades everyone) =====
+  // Course-first flow: pick a course → the Student dropdown fills with that course's
+  // enrolled students. A teacher only ever sees the courses they teach.
+  async function loadGradesView(){
+    if(!currentUser) return;
+    const role = currentUser.role;
+
+    // header labels + which courses this user may grade
+    let courses = [];
+    const saveBtn = document.getElementById('gSaveBtn');
+    if(role === 'teacher'){
+      document.getElementById('gradeScope').textContent = '(sent to admin for approval)';
+      document.getElementById('gCourseHint').textContent = '(courses you teach)';
+      if(saveBtn) saveBtn.textContent = '📤 Send to Admin';
+      courses = await (await fetch('/api/teacher-courses?teacherId='+currentUser.teacherId)).json();
+    } else if(role === 'admin'){
+      document.getElementById('gradeScope').textContent = '(admin — saved directly)';
+      document.getElementById('gCourseHint').textContent = '(all courses)';
+      if(saveBtn) saveBtn.textContent = '💾 Save';
+      courses = await (await fetch('/api/courses')).json();
+    }
+
+    const gc = document.getElementById('gCourse');
+    if(courses.length === 0){
+      gc.innerHTML = '<option value="">— no courses assigned to you —</option>';
+    } else {
+      gc.innerHTML = courses.map(c => `<option value="${c.id}">${c.code} · ${c.title}</option>`).join('');
+    }
+    await loadCourseStudentsForGrade();     // fill students for the first course
+    loadGradesTable();
+
+    // role-specific lists: admin sees the approval inbox, teacher sees what they sent
+    if(role === 'admin')   loadApprovals();
+    if(role === 'teacher') loadMySubmissions();
+  }
+
+  // ===== ADMIN: approval inbox (grades teachers sent) =====
+  async function loadApprovals(){
+    const rows = await (await fetch('/api/submissions?status=pending')).json();
+    renderApprovals(rows);
+  }
+  function renderApprovals(rows){
+    // red alert + menu badge
+    const alert = document.getElementById('approvalsAlert');
+    if(rows.length){
+      document.getElementById('approvalsAlertText').textContent =
+        rows.length + (rows.length === 1 ? ' grade is' : ' grades are') + ' waiting for your approval';
+      alert.style.display = 'block';
+    } else {
+      alert.style.display = 'none';
+    }
+    setBadge('gradesBadge', rows.length);
+    document.getElementById('approvalsBody').innerHTML = rows.map(r => `
+      <tr>
+        <td>${r.teacher}</td>
+        <td>${r.student}</td>
+        <td>${r.code} · ${r.title}</td>
+        <td><b>${r.score}</b></td>
+        <td style="color:var(--muted);font-size:12px">${(r.submittedAt||'').slice(0,16)}</td>
+        <td>
+          <button onclick="decide(${r.id},'approve')" style="background:linear-gradient(135deg,var(--green),#16a34a);color:#fff;border:none;border-radius:7px;padding:6px 12px;font-weight:600;cursor:pointer;margin-right:6px">✓ Approve</button>
+          <button onclick="decide(${r.id},'reject')"  style="background:rgba(239,68,68,.15);color:var(--red);border:1px solid var(--red);border-radius:7px;padding:6px 12px;font-weight:600;cursor:pointer">✕ Reject</button>
+        </td>
+      </tr>`).join('') ||
+      '<tr><td colspan="6" style="color:var(--muted)">📭 Nothing waiting — no grades sent by teachers.</td></tr>';
+  }
+
+  // ADMIN clicks Approve/Reject → backend commits (or discards) the grade
+  async function decide(submissionId, decision){
+    const res = await fetch('/api/submission-decision', {
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:`submissionId=${submissionId}&decision=${decision}&role=${encodeURIComponent(currentUser.role)}`
+    });
+    const out = await res.json();
+    if(out.ok){
+      loadApprovals();      // refresh the inbox
+      loadGradesTable();    // approved grade now shows in the official table
+    } else {
+      alert('❌ ' + (out.error || 'failed'));
+    }
+  }
+
+  // ===== TEACHER: status of the grades I sent the admin =====
+  async function loadMySubmissions(){
+    if(!currentUser || currentUser.teacherId == null) return;
+    const rows = await (await fetch('/api/submissions?teacherId='+currentUser.teacherId)).json();
+    document.getElementById('mySubmissionsBody').innerHTML = rows.map(r => {
+      const badge = r.status === 'approved' ? '<span class="badge b-green">✓ Approved</span>'
+                  : r.status === 'rejected' ? '<span class="badge b-red">✕ Rejected</span>'
+                  :                           '<span class="badge b-amber">⏳ Pending</span>';
+      return `<tr><td>${r.student}</td><td>${r.code} · ${r.title}</td><td>${r.score}</td>
+              <td style="color:var(--muted);font-size:12px">${(r.submittedAt||'').slice(0,16)}</td>
+              <td>${badge}</td></tr>`;
+    }).join('') ||
+      '<tr><td colspan="5" style="color:var(--muted)">You haven\'t sent any grades yet.</td></tr>';
+  }
+
+  // when a course is picked, the Student dropdown shows ONLY students enrolled in it
+  async function loadCourseStudentsForGrade(){
+    const cid = document.getElementById('gCourse').value;
+    const sel = document.getElementById('gStudent');
+    if(!cid){ sel.innerHTML = '<option value="">— pick a course —</option>'; return; }
+    const students = await (await fetch('/api/course-students?courseId='+cid)).json();
+    if(students.length === 0){
+      sel.innerHTML = '<option value="">— no students enrolled yet —</option>';
+    } else {
+      sel.innerHTML = students.map(s =>
+        `<option value="${s.id}">${s.name}${s.score!=null?` (now ${s.score})`:''}</option>`
+      ).join('');
+    }
+  }
+
+  async function loadGradesTable(){
+    // server-side scoping: student → own grades, teacher → their courses, admin → all
+    let url = '/api/grades';
+    const t = document.getElementById('gradesTitle'), sc = document.getElementById('gradesScope');
+    if(currentUser){
+      if(currentUser.role === 'student'){
+        url += '?role=student&studentId=' + currentUser.studentId;
+        if(t) t.textContent = 'My Grades'; if(sc) sc.textContent = '(read-only)';
+      } else if(currentUser.role === 'teacher'){
+        url += '?role=teacher&teacherId=' + currentUser.teacherId;
+        if(t) t.textContent = 'Grades — Your Courses'; if(sc) sc.textContent = '(live from database)';
+      } else {
+        url += '?role=admin';
+        if(t) t.textContent = 'All Grades'; if(sc) sc.textContent = '(every student · live)';
+      }
+    }
+    let rows = await (await fetch(url)).json();
+    document.getElementById('gradesBody').innerHTML = rows.map(r => {
+      const s = r.score;
+      const letter = s==null?'-': s>=90?'A': s>=80?'B': s>=70?'C': s>=60?'D':'F';
+      let badge = '<span class="badge b-amber">Not graded</span>';
+      if(s!=null) badge = s>=80 ? '<span class="badge b-green">Excellent</span>'
+                        : s>=60 ? '<span class="badge b-blue">Pass</span>'
+                        :         '<span class="badge b-red">Fail</span>';
+      return `<tr><td>${r.student}</td><td>${r.code} · ${r.title}</td>
+              <td>${s==null?'—':s}</td><td>${letter}</td><td>${badge}</td></tr>`;
+    }).join('') || '<tr><td colspan="5" style="color:var(--muted)">No grades yet</td></tr>';
+  }
+
+  async function saveGrade(){
+    const courseId  = document.getElementById('gCourse').value;
+    const studentId = document.getElementById('gStudent').value;
+    const score     = document.getElementById('gScore').value;
+    const msg = document.getElementById('gMsg');
+
+    if(!courseId){  msg.style.color='var(--red)'; msg.textContent='⚠ Pick a course first'; return; }
+    if(!studentId){ msg.style.color='var(--red)'; msg.textContent='⚠ No student is enrolled in this course'; return; }
+    if(score===''||score<0||score>100){ msg.style.color='var(--red)'; msg.textContent='⚠ Enter 0–100'; return; }
+
+    // POST the grade → backend authorizes (teacher = own courses only) then UPDATE/INSERT
+    const res = await fetch('/api/grade', {
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:`studentId=${studentId}&courseId=${courseId}&score=${score}`
+         + `&role=${encodeURIComponent(currentUser.role)}`
+         + `&teacherId=${currentUser.teacherId==null?'':currentUser.teacherId}`
+    });
+    const out = await res.json();
+    if(out.ok){
+      document.getElementById('gScore').value='';
+      if(out.submitted){
+        // TEACHER: grade was SENT to the admin, not written yet
+        msg.style.color='var(--green)'; msg.textContent='📤 Sent to admin for approval';
+        loadMySubmissions();                // show it as pending
+      } else {
+        // ADMIN: written straight to the database
+        msg.style.color='var(--green)'; msg.textContent='✅ Saved to database!';
+        loadCourseStudentsForGrade();       // refresh the (now graded) student list
+        loadGradesTable();                  // refresh the table from the DB
+      }
+    } else {
+      msg.style.color='var(--red)'; msg.textContent='❌ '+(out.error||'failed');
+    }
+  }
+
+  // ===== STUDENT: ENROLL (must reach 15 credits) =====
+  async function loadEnrollView(){
+    const sel = document.getElementById('enStudent');
+    if(currentUser && currentUser.role === 'student'){
+      // a student can ONLY enroll themselves → lock the dropdown
+      sel.innerHTML = `<option value="${currentUser.studentId}">${currentUser.name}</option>`;
+      sel.disabled = true;
+    } else {
+      // admin can enroll anyone
+      const students = await (await fetch('/api/students')).json();
+      sel.innerHTML = students.map(s => `<option value="${s.id}">${s.name}</option>`).join('');
+      sel.disabled = false;
+    }
+    // show welcome banner only right after sign-up
+    document.getElementById('welcomeBanner').style.display = isNewStudent ? 'block' : 'none';
+    isNewStudent = false;
+    loadEnrollList();
+  }
+
+  // show all courses as checkboxes; already-enrolled ones are ticked + locked
+  async function loadEnrollList(){
+    const sid = document.getElementById('enStudent').value;
+    const all      = await (await fetch('/api/courses')).json();
+    const enrolled = await (await fetch('/api/student-courses?studentId='+sid)).json();
+    const enrolledIds = new Set(enrolled.map(c => c.id));
+
+    document.getElementById('enrollList').innerHTML = all.map(c => {
+      const already = enrolledIds.has(c.id);
+      return `<label style="display:flex;align-items:center;gap:10px;background:var(--black);
+                border:1px solid var(--border);border-radius:10px;padding:12px;cursor:pointer">
+        <input type="checkbox" class="enChk" value="${c.id}" data-credits="${c.credits}"
+               onchange="updateCredits()" ${already?'checked disabled':''}>
+        <div>
+          <div style="font-weight:600">${c.code} · ${c.title}</div>
+          <div style="font-size:12px;color:var(--muted)">${c.credits} credits${already?' · already enrolled ✅':''}</div>
+        </div>
+      </label>`;
+    }).join('');
+    updateCredits();
+  }
+
+  // live credit counter + enable the button only at 15+
+  function updateCredits(){
+    let total = 0;
+    document.querySelectorAll('.enChk:checked').forEach(ch => total += parseInt(ch.dataset.credits));
+    document.getElementById('enTotal').textContent = total;
+    const pct = Math.min(100, (total/15)*100);
+    document.querySelector('#enBar > div').style.width = pct + '%';
+
+    const btn = document.getElementById('enBtn');
+    if(total >= 15){
+      btn.disabled = false;
+      btn.style.cursor = 'pointer';
+      btn.style.background = 'linear-gradient(135deg,var(--blue),var(--blue-glow))';
+      btn.style.color = '#fff';
+    } else {
+      btn.disabled = true;
+      btn.style.cursor = 'not-allowed';
+      btn.style.background = 'var(--border)';
+      btn.style.color = 'var(--muted)';
+    }
+  }
+
+  async function doEnroll(){
+    const sid = document.getElementById('enStudent').value;
+    const msg = document.getElementById('enMsg');
+    // only the NEW (not-disabled) checked boxes
+    const ids = [...document.querySelectorAll('.enChk:checked:not(:disabled)')].map(ch => ch.value);
+    if(ids.length === 0){ msg.style.color='var(--red)'; msg.textContent='⚠ Pick new courses to add'; return; }
+
+    const res = await fetch('/api/enroll', {
+      method:'POST',
+      headers:{'Content-Type':'application/x-www-form-urlencoded'},
+      body:`studentId=${sid}&courseIds=${ids.join(',')}`
+    });
+    const out = await res.json();
+    if(out.ok){
+      msg.style.color='var(--green)'; msg.textContent=`✅ Enrolled! (${out.credits} credits)`;
+      loadEnrollList();   // refresh — newly enrolled now show as locked ✅
+    } else {
+      msg.style.color='var(--red)'; msg.textContent='❌ '+(out.error||'failed');
+    }
+  }
+
+  // ===== LIVE COURSE SEARCH =====
+  function searchCourses(){
+    const term = document.getElementById('searchBox').value.toLowerCase().trim();
+    const cards = document.querySelectorAll('#courses .course-card');
+    let visible = 0;
+
+    cards.forEach(card => {
+      // get the course NAME only (the part after "· "), e.g. "Data Structures"
+      let title = card.querySelector('.ctitle').textContent.toLowerCase();
+      if(title.includes('·')) title = title.split('·')[1];   // drop the "💻 CS201 ·" prefix
+      title = title.trim();
+
+      // match if the course name BEGINS with what you typed
+      const match = term === '' || title.startsWith(term);
+      card.style.display = match ? '' : 'none';       // show or hide each card
+      if(match) visible++;
+    });
+
+    // hide a year heading + its grid if all its courses are hidden
+    document.querySelectorAll('#courses .course-grid').forEach(grid => {
+      const anyVisible = [...grid.querySelectorAll('.course-card')]
+                           .some(c => c.style.display !== 'none');
+      grid.style.display = anyVisible ? '' : 'none';
+      if(grid.previousElementSibling && grid.previousElementSibling.tagName === 'H2')
+        grid.previousElementSibling.style.display = anyVisible ? '' : 'none';
+    });
+
+    // show the "no results" message if nothing matched
+    document.getElementById('noResults').style.display = (visible === 0 && term !== '') ? 'block' : 'none';
+  }
+</script>
+</body>
+</html>

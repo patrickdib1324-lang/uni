@@ -1,0 +1,22 @@
+plugins {
+    id 'org.springframework.boot' version '3.3.0'
+    id 'io.spring.dependency-management' version '1.1.5'
+    id 'java'
+}
+
+group = 'com.uni'
+version = '0.0.1'
+
+java {
+    sourceCompatibility = '17'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'        // REST endpoints + web server
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'   // database access (JPA)
+    implementation 'org.postgresql:postgresql'                               // PostgreSQL JDBC driver
+}
