@@ -17,9 +17,20 @@ public class Server {                    // our program. "public class Server" m
 
     // ===== SETTINGS: the database login is READ from secret.properties (not written here) =====
     static final Properties cfg = loadConfig();      // load the secret file once at startup
-    static final String DB_URL  = conf("DB_URL",  "jdbc:postgresql://localhost:5432/university"); // address of the database
-    static final String DB_USER = conf("DB_USER", "postgres");      // database username (from secret file)
-    static final String DB_PASS = conf("DB_PASS", "");             // database password (from secret file)
+    static final String DB_URL  = buildDbUrl();      // full database address (built below)
+    static final String DB_USER = conf("DB_USER", "postgres");      // database username
+    static final String DB_PASS = conf("DB_PASS", "");             // database password
+
+    // Build the database address. Use DB_URL if given; otherwise assemble it from
+    // DB_HOST / DB_PORT / DB_NAME (which Render fills in automatically).
+    static String buildDbUrl() {
+        String url = conf("DB_URL", "");                  // an explicit full URL wins if present
+        if (!url.isBlank()) return url;
+        String host = conf("DB_HOST", "localhost");       // else build from the pieces
+        String port = conf("DB_PORT", "5432");
+        String name = conf("DB_NAME", "university");
+        return "jdbc:postgresql://" + host + ":" + port + "/" + name;
+    }
     static final Path FRONTEND  = Paths.get("frontend");   // the folder where index.html lives
 
     // read secret.properties from disk; if it's missing, just use an empty config (defaults will apply)

@@ -1,0 +1,34 @@
+# Render Blueprint — creates the database AND the web app, and wires them together.
+# Render reads this file and sets everything up for you.
+
+databases:
+  - name: uni-db            # a free PostgreSQL database
+    plan: free
+
+services:
+  - type: web               # the web app (your Java server)
+    name: uni
+    runtime: docker         # build using your Dockerfile
+    plan: free
+    envVars:
+      # these are filled IN AUTOMATICALLY from the database above — no typing passwords
+      - key: DB_HOST
+        fromDatabase:
+          name: uni-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: uni-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: uni-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: uni-db
+          property: user
+      - key: DB_PASS
+        fromDatabase:
+          name: uni-db
+          property: password
