@@ -119,13 +119,36 @@
   .course-card:hover{border-color:var(--blue);transform:translateY(-3px);}
   .course-card .ctitle{font-size:17px;font-weight:600;margin-bottom:6px;}
   .course-card .cteach{color:var(--muted);font-size:13px;margin-bottom:14px;}
+
+  /* ===== MOBILE / RESPONSIVE ===== */
+  #menuBtn{display:none;background:var(--panel);color:var(--text);border:1px solid var(--border);
+    border-radius:10px;padding:9px 13px;font-size:18px;cursor:pointer;line-height:1;}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:90;}
+  .sidebar-overlay.show{display:block;}
+
+  @media (max-width:820px){
+    #menuBtn{display:inline-flex;}                 /* show the hamburger on phones */
+    .sidebar{transform:translateX(-100%);transition:transform .25s ease;z-index:100;}
+    .sidebar.open{transform:translateX(0);}        /* slide in when opened */
+    .main{margin-left:0;padding:18px 16px;}        /* full width, no sidebar gap */
+    .stats{grid-template-columns:repeat(2,1fr);}   /* 2 cards per row */
+    .grid2{grid-template-columns:1fr;}             /* stack the two-column panels */
+    .course-grid{grid-template-columns:1fr;}       /* one course card per row */
+    .topbar{flex-wrap:wrap;gap:12px;}
+    .topbar h1{font-size:22px;}
+    .search{width:100%;}                           /* full-width search box */
+  }
+  @media (max-width:480px){
+    .stats{grid-template-columns:1fr;}             /* one card per row on tiny screens */
+    .main{padding:14px 12px;}
+  }
 </style>
 </head>
 <body>
 
   <!-- ===== LOGIN PAGE (shown first, before the app) ===== -->
   <div id="loginPage" style="position:fixed;inset:0;z-index:1000;background:radial-gradient(circle at 30% 20%,#10203f,var(--black));display:flex;align-items:center;justify-content:center">
-    <div style="background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:40px;width:360px;box-shadow:0 20px 60px rgba(0,0,0,.5)">
+    <div style="background:var(--panel);border:1px solid var(--border);border-radius:18px;padding:40px;width:360px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,.5)">
       <button id="backToAccount" onclick="backToAccount()" style="display:none;width:100%;background:transparent;color:var(--blue-light);border:1px solid var(--border);border-radius:10px;padding:11px;margin-bottom:18px;font-weight:600;cursor:pointer">← Back to my account</button>
       <div style="text-align:center;margin-bottom:26px">
         <div style="font-size:40px">🎓</div>
@@ -219,11 +242,15 @@
     </div>
   </div>
 
+  <!-- dark overlay behind the slide-in sidebar on phones (tap to close) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
   <!-- ===== MAIN AREA ===== -->
   <div class="main">
 
     <div class="topbar">
       <div style="display:flex;align-items:center;gap:14px">
+        <button id="menuBtn" onclick="toggleSidebar()" title="Menu">☰</button>
         <button onclick="goToLogin()" title="Go to the login page (stay signed in)" style="background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 14px;font-weight:600;cursor:pointer">← Login</button>
         <div>
           <h1 id="page-title">Dashboard</h1>
@@ -535,6 +562,16 @@
     document.querySelector('.nav-item[data-roles]').click();
   }
 
+  // 📱 open / close the slide-in sidebar on phones
+  function toggleSidebar(){
+    document.querySelector('.sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('show');
+  }
+  function closeSidebar(){
+    document.querySelector('.sidebar').classList.remove('open');
+    document.getElementById('sidebarOverlay').classList.remove('show');
+  }
+
   // ← Login button: go to the login page but STAY signed in (so you can come back)
   function goToLogin(){
     document.getElementById('app').style.display = 'none';
@@ -714,6 +751,7 @@
     profile:["Profile","Your account & summary"]
   };
   function show(id, el){
+    closeSidebar();   // on phones, close the slide-in menu after picking a page
     document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
