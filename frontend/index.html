@@ -138,8 +138,13 @@
           style="width:100%;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:16px;outline:none">
 
         <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Password</div>
-        <input id="loginPass" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"
-          style="width:100%;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:20px;outline:none">
+        <div style="position:relative;margin-bottom:20px">
+          <input id="loginPass" type="password" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"
+            style="width:100%;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;padding-right:44px;outline:none">
+          <span onclick="togglePass('loginPass',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:white;display:flex" title="Show / hide password">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </span>
+        </div>
 
         <button onclick="doLogin()" style="width:100%;background:linear-gradient(135deg,var(--blue),var(--blue-glow));color:#fff;border:none;border-radius:10px;padding:13px;font-weight:600;font-size:15px;cursor:pointer">Sign In →</button>
         <div style="text-align:center;font-size:13px;margin-top:16px;color:var(--muted)">
@@ -168,8 +173,13 @@
           style="width:100%;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;outline:none">
 
         <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Password</div>
-        <input id="suPass" type="password" placeholder="••••••"
-          style="width:100%;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:20px;outline:none">
+        <div style="position:relative;margin-bottom:20px">
+          <input id="suPass" type="password" placeholder="••••••"
+            style="width:100%;background:var(--black);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:12px;padding-right:44px;outline:none">
+          <span onclick="togglePass('suPass',this)" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;color:white;display:flex" title="Show / hide password">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+          </span>
+        </div>
 
         <button onclick="doRegister()" style="width:100%;background:linear-gradient(135deg,var(--green),#16a34a);color:#fff;border:none;border-radius:10px;padding:13px;font-weight:600;font-size:15px;cursor:pointer">📩 Request Account</button>
         <div style="text-align:center;font-size:12px;margin-top:12px;color:var(--muted)">
@@ -462,6 +472,22 @@
 <script>
   // ===== LOGIN + ROLES =====
   let currentUser = null;   // { role, name, studentId }
+
+  // the two eye icons (open = hidden password, slashed = visible password)
+  const EYE_OPEN = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+  const EYE_OFF  = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 11 7 11 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 1 12s4 7 11 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" x2="22" y1="2" y2="22"/></svg>';
+
+  // 👁️ show / hide a password field. Flips the input between hidden dots and real text.
+  function togglePass(inputId, eye){
+    const inp = document.getElementById(inputId);
+    if(inp.type === 'password'){      // currently hidden → reveal it
+      inp.type = 'text';
+      eye.innerHTML = EYE_OFF;        // show the "slashed eye" (password is visible)
+    } else {                          // currently shown → hide it again
+      inp.type = 'password';
+      eye.innerHTML = EYE_OPEN;       // show the normal eye (password hidden)
+    }
+  }
 
   async function doLogin(){
     const username = document.getElementById('loginUser').value;
