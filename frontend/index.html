@@ -21,6 +21,8 @@
     --amber:#f59e0b;
   }
   *{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif;}
+  /* hide the BROWSER's built-in password reveal eye (Edge/IE) so only our white eye shows */
+  input::-ms-reveal, input::-ms-clear{display:none;}
   body{background:var(--black);color:var(--text);display:flex;min-height:100vh;}
 
   /* ===== LEFT SIDEBAR / DASHBOARD ===== */
